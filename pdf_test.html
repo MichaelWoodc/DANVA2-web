@@ -47,7 +47,7 @@
     <h1>PDF Form Filler</h1>
     
     <div class="instructions">
-        <p>Click the button below to load the PDF template and fill all fields with "test".</p>
+        <p>Click the button below to load the PDF template and test out the library to fill in the form!</p>
     </div>
     
     <button id="fillPdf">Fill PDF Form</button>
@@ -128,7 +128,7 @@
                 const blob = new Blob([filledPdfBytes], { type: 'application/pdf' });
                 saveAs(blob, 'filled_form.pdf');
                 
-                statusElement.textContent = "PDF filled and downloaded successfully!";
+                statusElement.textContent = "PDF filled, now downloading...";
                 console.log('PDF filled and downloaded successfully!');
             } catch (error) {
                 console.error('Error filling PDF:', error);
