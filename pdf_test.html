@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Filler</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 20px 0;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF Form Filler</h1>
+    
+    <div class="instructions">
+        <p>Click the button below to load the PDF template and fill all fields with "test".</p>
+    </div>
+    
+    <button id="fillPdf">Fill PDF Form</button>
+    <div id="status"></div>
+    
+    <script>
+        document.getElementById('fillPdf').addEventListener('click', async function() {
+            try {
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = "Loading PDF template...";
+                
+                // Load the existing PDF template
+                const { PDFDocument } = PDFLib;
+                const pdfBytes = await fetch('blankDocumentNumberLine.pdf').then(res => res.arrayBuffer());
+                const pdfDoc = await PDFDocument.load(pdfBytes);
+                
+                statusElement.textContent = "Filling form fields...";
+                
+                // Get the form
+                const form = pdfDoc.getForm();
+                
+                // List of all field names to fill
+                const fieldNames = [
+                    "angryLowIntensityErrors", "misattributedAngryFearful", "misattributedSadAngry",
+                    "fearfulHighIntensityErrors", "totalerrors", "happyLowIntensityErrors",
+                    "errorsByMisjudgement", "sadLowIntensityErrors", "angryHighIntensityErrors",
+                    "happyHighIntensityErrors", "danvasubtest", "participant",
+                    "misattributedSadHappy", "fearfulLowIntensityErrors", "misattributedFearfulSad",
+                    "misattributedFearfulAngry", "happyErrors", "misattributedAngrySad",
+                    "fearfulErrors", "sadHighIntensityErrors", "misattributedSadFearful",
+                    "age", "highIntensityErrors", "misattributedHappyAngry",
+                    "misattributedHappySad", "skippedErrors", "misattributedHappyFearful",
+                    "sadErrors", "misattributedFearfulHappy", "lowIntensityErrors",
+                    "angryErrors", "misattributedAngryHappy", "correctAnswer15",
+                    "stim18", "stim2", "stim10", "correctAnswer22", "incorrectAnswer8",
+                    "incorrectAnswer6", "correctAnswer10", "stim5", "correctAnswer21",
+                    "incorrectAnswer20", "stim16", "incorrectAnswer19", "incorrectAnswer10",
+                    "incorrectAnswer18", "incorrectAnswer5", "totalErrors", "incorrectAnswer7",
+                    "incorrectAnswer12", "correctAnswer8", "stim12", "correctAnswer14",
+                    "incorrectAnswer0", "correctAnswer7", "correctAnswer11", "incorrectAnswer14",
+                    "correctAnswer20", "incorrectAnswer21", "correctAnswer0", "incorrectAnswer9",
+                    "stim20", "stim4", "incorrectAnswer13", "correctAnswer13", "stim3",
+                    "correctAnswer16", "incorrectAnswer4", "correctAnswer17", "correctAnswer2",
+                    "correctAnswer18", "correctAnswer9", "stim7", "incorrectAnswer23",
+                    "correctAnswer6", "incorrectAnswer22", "incorrectAnswer15", "incorrectAnswer11",
+                    "stim6", "incorrectAnswer1", "correctAnswer19", "correctAnswer4", "stim8",
+                    "correctAnswer1", "incorrectAnswer16", "correctAnswer23", "stim14",
+                    "correctAnswer12", "correctAnswer5", "correctAnswer3", "stim19",
+                    "stim23", "stim0", "stim21", "stim17", "incorrectAnswer3", "stim9",
+                    "stim22", "stim13", "stim15", "incorrectAnswer2", "stim1", "stim11",
+                    "incorrectAnswer17", "totalErrors2", "fearfulErrors2", "angryErrors2",
+                    "sadErrors2", "happyErrors2", "femaleTotalErrors", "femaleFearfulErrors",
+                    "femaleAngryErrors", "femaleSadErrors", "femaleHappyErrors", "maleTotalErrors",
+                    "maleFearfulErrors", "maleAngryErrors", "maleHappyErrors", "maleSadErrors",
+                    "totalErrors1"
+                ];
+                
+                // Fill each field with "test"
+                fieldNames.forEach(fieldName => {
+                    try {
+                        const field = form.getField(fieldName);
+                        if (field) {
+                            field.setText("test");
+                        } else {
+                            console.warn(`Field not found: ${fieldName}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error processing field ${fieldName}:`, error);
+                    }
+                });
+                
+                statusElement.textContent = "Saving PDF...";
+                
+                // Serialize the PDF to bytes
+                const filledPdfBytes = await pdfDoc.save();
+                
+                // Trigger download
+                const blob = new Blob([filledPdfBytes], { type: 'application/pdf' });
+                saveAs(blob, 'filled_form.pdf');
+                
+                statusElement.textContent = "PDF filled and downloaded successfully!";
+                console.log('PDF filled and downloaded successfully!');
+            } catch (error) {
+                console.error('Error filling PDF:', error);
+                document.getElementById('status').textContent = 
+                    'Error filling PDF. Please check console for details.';
+                alert('An error occurred while filling the PDF. Please check the console for details.');
+            }
+        });
+    </script>
+</body>
+</html>
