@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Single Stacked Bar Chart PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; }
+    canvas { display: none; }
+    button {
+      padding: 12px 24px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Single Stacked Horizontal Bar Chart in PDF</h1>
+<button id="fillPdf">Fill PDF & Insert Chart</button>
+<canvas id="chartCanvas" width="600" height="150"></canvas>
+<div id="status"></div>
+
+<script>
+  async function generateChart() {
+    const ctx = document.getElementById('chartCanvas').getContext('2d');
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [''],  // Remove label name
+        datasets: [
+          { label: '', data: [6], backgroundColor: 'green' },
+          { label: '', data: [6], backgroundColor: 'blue' },
+          { label: '', data: [6], backgroundColor: 'red' },
+          { label: '', data: [2], backgroundColor: 'yellow' }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: false,
+        animation: false,
+        scales: {
+          x: {
+            display: false, // remove x axis
+            stacked: true,
+            min: 0,
+            max: 24
+          },
+          y: {
+            display: false, // remove y axis
+            stacked: true
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+  }
+
+  document.getElementById('fillPdf').addEventListener('click', async function () {
+    const statusElement = document.getElementById('status');
+    statusElement.textContent = "Generating chart...";
+
+    const chart = await generateChart();
+
+    setTimeout(async () => {
+      const chartCanvas = document.getElementById('chartCanvas');
+      const chartImageUrl = chartCanvas.toDataURL('image/png');
+
+      statusElement.textContent = "Loading PDF template...";
+
+      const pdfBytes = await fetch('blankDocumentNumberLine.pdf').then(res => res.arrayBuffer());
+      const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+      const page = pdfDoc.getPages()[0];
+
+      statusElement.textContent = "Inserting chart into PDF...";
+
+      const chartImage = await pdfDoc.embedPng(chartImageUrl);
+
+      // Set your manual dimensions and position here
+      const imageWidth = 478;  // in points
+      const imageHeight = 42.5;  // in points
+      const x = 67;            // 1 inch from the left
+      const y = 606.5;           // 192 points (2.67 in) from bottom
+
+      page.drawImage(chartImage, {
+        x,
+        y,
+        width: imageWidth,
+        height: imageHeight,
+      });
+
+      const pdfBytesModified = await pdfDoc.save();
+      saveAs(new Blob([pdfBytesModified], { type: 'application/pdf' }), 'single_stacked_chart.pdf');
+
+      statusElement.textContent = "PDF generated with embedded chart!";
+    }, 200);
+  });
+</script>
+</body>
+</html>
