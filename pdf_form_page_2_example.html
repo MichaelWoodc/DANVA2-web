@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Filler</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script>
+        // Define the emotion mappings
+        const emotions = {
+            1: "happy",
+            2: "sad",
+            3: "angry",
+            4: "fearful"
+        };
+
+        // Simulated answers (default to 'happy' for all 24 stim fields)
+        window.simulatedAnswers = Array(24).fill("happy");
+
+        // Load the JSON data
+        async function loadJson() {
+            const response = await fetch('adult_faces.json');
+            const data = await response.json();
+            return data;
+        }
+
+        // Fill the PDF form based on the JSON data and simulated answers
+        async function fillPdf() {
+            // Load the JSON data
+            const json = await loadJson();
+            
+            // Load the PDF file
+            const pdfUrl = 'blankDocumentNumberLine.pdf';
+            const pdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+
+            // Get the form from the loaded PDF
+            const form = pdfDoc.getForm();
+
+            // Loop through the stim fields (0-23) and set their values
+            for (let i = 0; i < 24; i++) {
+                const stimData = json[i];
+                if (!stimData) {
+                    console.warn(`Missing entry at index ${i}`);
+                    continue;
+                }
+
+                // Get the filename from stimFile
+                const stimFilename = stimData.stimFile.split("/").pop();
+
+                // Get correct answer and mapping
+                const correctEmotion = emotions[stimData.correctAnswer] || "unknown";
+                const intensity = stimData.intensity === 2 ? "high" : "low";
+                const gender = stimData.stimuliGender === 1 ? "female" : "male";
+
+                // Get the answer from the simulated answers array
+                const userAnswer = window.simulatedAnswers[i];
+
+                // Set the stim field (image)
+                form.getTextField(`stim${i}`).setText(stimFilename);
+
+                // Set the correct answer field with intensity and gender
+                form.getTextField(`correctAnswer${i}`).setText(`${correctEmotion}, ${intensity}, ${gender}`);
+
+                // Set incorrectAnswer field only if the user's answer is incorrect
+                if (userAnswer !== correctEmotion) {
+                    form.getTextField(`incorrectAnswer${i}`).setText(userAnswer);
+                } else {
+                    form.getTextField(`incorrectAnswer${i}`).setText(""); // Clear if correct
+                }
+            }
+
+            // Save the filled PDF
+            const pdfBytesFilled = await pdfDoc.save();
+
+            // Download the filled PDF
+            const blob = new Blob([pdfBytesFilled], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'filled_form.pdf';
+            link.click();
+        }
+
+        // Event listener to trigger PDF filling on button click
+        window.onload = function() {
+            document.getElementById("fillPdfButton").addEventListener("click", fillPdf);
+        };
+    </script>
+</head>
+<body>
+    <h1>PDF Form Filler</h1>
+    <p>Click the button to fill the PDF form based on simulated answers.</p>
+    <button id="fillPdfButton">Fill PDF</button>
+</body>
+</html>
